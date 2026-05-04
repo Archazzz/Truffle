@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>觅露 (Truffle) — 设置</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="truffle-options">
+    <!-- 头部 -->
+    <header class="options-header">
+      <div class="options-logo">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="M21 21l-4.35-4.35"/>
+        </svg>
+        <div>
+          <h1>觅露 (Truffle)</h1>
+          <p>认知主权声明工具 — v1.4.1</p>
+        </div>
+      </div>
+    </header>
+
+    <main class="options-main">
+      <!-- 激活码 -->
+      <section class="options-section" id="activation-section">
+        <h2>激活</h2>
+        <div class="activation-box" id="activation-box">
+          <div class="activation-status" id="activation-status">
+            <span class="status-dot inactive"></span>
+            <span>未激活</span>
+          </div>
+          <div class="activation-input-group">
+            <input type="text" id="activation-code" placeholder="输入激活码" maxlength="20">
+            <button id="activate-btn">激活</button>
+          </div>
+          <p class="activation-hint" id="activation-hint">本版本为内测版，激活码请向开发者索取</p>
+        </div>
+      </section>
+
+      <!-- 保存设置 -->
+      <section class="options-section">
+        <h2>保存设置</h2>
+        <div class="options-field">
+          <label>文件夹组织方式</label>
+          <div class="options-radio-group" id="folder-structure-group">
+            <label class="radio-label">
+              <input type="radio" name="folder-structure" value="flat" id="folder-flat" checked>
+              <span>扁平（所有文件放在同一目录）</span>
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="folder-structure" value="byCategory" id="folder-byCategory">
+              <span>按分类（科技/商业/设计/...）</span>
+            </label>
+          </div>
+        </div>
+        <div class="options-field">
+          <button class="options-btn" id="select-dir-btn">📁 选择保存文件夹</button>
+          <span class="options-note" id="dir-note">未选择保存文件夹</span>
+        </div>
+      </section>
+
+      <!-- AI 配置 -->
+      <section class="options-section">
+        <h2>AI 配置</h2>
+        <div class="options-field">
+          <label>AI 提供商</label>
+          <div class="provider-tabs">
+            <button class="provider-tab active" data-provider="moonshot">Moonshot (Kimi)</button>
+            <button class="provider-tab" data-provider="kimiCoding">Kimi Coding</button>
+            <button class="provider-tab" data-provider="custom">自定义</button>
+          </div>
+        </div>
+
+        <!-- Moonshot -->
+        <div class="provider-panel active" id="panel-moonshot">
+          <div class="options-field">
+            <label for="moonshot-key">API Key</label>
+            <input type="password" id="moonshot-key" placeholder="sk-xxxxxxxx">
+            <span class="options-note">在 <a href="https://platform.moonshot.cn" target="_blank">platform.moonshot.cn</a> 获取</span>
+          </div>
+          <div class="options-field">
+            <label for="moonshot-model">模型</label>
+            <select id="moonshot-model">
+              <option value="moonshot-v1-8k">Moonshot v1-8k（轻量/便宜）</option>
+              <option value="kimi-k2.5" selected>Kimi K2.5（通用）</option>
+            </select>
+          </div>
+          <div class="options-field">
+            <button class="options-btn" id="test-moonshot-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;vertical-align:middle;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>测试连接</button>
+            <span class="options-note" id="test-moonshot-result"></span>
+          </div>
+        </div>
+
+        <!-- Kimi Coding -->
+        <div class="provider-panel" id="panel-kimiCoding">
+          <div class="options-field">
+            <label for="kimi-coding-key">Coding API Key</label>
+            <input type="password" id="kimi-coding-key" placeholder="sk-kimi-xxxxxxxx">
+            <span class="options-note">注意：Coding API Key 与普通 API Key 不互通</span>
+          </div>
+          <div class="options-field">
+            <label for="kimi-coding-model">模型</label>
+            <select id="kimi-coding-model">
+              <option value="kimi-k2.6" selected>Kimi K2.6（代码/结构化）</option>
+            </select>
+          </div>
+          <div class="options-field">
+            <button class="options-btn" id="test-kimi-coding-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;vertical-align:middle;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>测试连接</button>
+            <span class="options-note" id="test-kimi-coding-result"></span>
+          </div>
+        </div>
+
+        <!-- 自定义 -->
+        <div class="provider-panel" id="panel-custom">
+          <div class="options-field">
+            <label for="custom-base-url">Base URL</label>
+            <input type="text" id="custom-base-url" placeholder="https://api.example.com/v1">
+          </div>
+          <div class="options-field">
+            <label for="custom-key">API Key</label>
+            <input type="password" id="custom-key" placeholder="sk-xxxxxxxx">
+          </div>
+          <div class="options-field">
+            <label for="custom-model">模型 ID</label>
+            <input type="text" id="custom-model" placeholder="gpt-4">
+          </div>
+          <div class="options-field">
+            <button class="options-btn" id="test-custom-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;vertical-align:middle;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>测试连接</button>
+            <span class="options-note" id="test-custom-result"></span>
+          </div>
+        </div>
+
+        <div class="options-field">
+          <label class="checkbox-label">
+            <input type="checkbox" id="ai-enabled" checked>
+            <span>启用 AI 功能</span>
+          </label>
+        </div>
+        <div class="options-field">
+          <label class="checkbox-label">
+            <input type="checkbox" id="auto-title" checked>
+            <span>自动 AI 生成标题</span>
+          </label>
+        </div>
+        <div class="options-field">
+          <label class="checkbox-label">
+            <input type="checkbox" id="auto-tags" checked>
+            <span>自动 AI 生成标签</span>
+          </label>
+        </div>
+      </section>
+
+      <!-- 快捷键 -->
+      <section class="options-section">
+        <h2>快捷键</h2>
+        <div class="options-field">
+          <label>唤起全页标记</label>
+          <div class="shortcut-display">Alt + Shift + C</div>
+          <span class="options-note">可在 Chrome 扩展快捷键设置中修改</span>
+        </div>
+      </section>
+
+      <!-- 关于 -->
+      <section class="options-section">
+        <h2>关于</h2>
+        <div class="about-box">
+          <p><strong>觅露 (Truffle)</strong> — 认知主权声明工具</p>
+          <p>在混沌繁杂的数据中，敏锐地捕捉那一点最有价值的认知。</p>
+          <p>开源协议：AGPL v3</p>
+          <p>版本：v1.4.1</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="options-footer">
+      <button class="options-btn-secondary" id="reset-btn">恢复默认</button>
+      <button class="options-btn-primary" id="save-config-btn">保存设置</button>
+    </footer>
+  </div>
+
+  <script src="../utils/constants.js"></script>
+  <script src="../utils/storage.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

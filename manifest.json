@@ -1,0 +1,83 @@
+{
+  "manifest_version": 3,
+  "name": "觅露 (Truffle)",
+  "version": "1.4.1",
+  "description": "认知主权声明工具 — 从任何信息源提取精华，以Markdown格式保存在本地",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting",
+    "downloads",
+    "declarativeNetRequest",
+    "webRequest",
+    "alarms"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "src/background/background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "exclude_matches": [
+        "*://*.pdf/*",
+        "file://*.pdf"
+      ],
+      "js": [
+        "src/utils/constants.js",
+        "src/utils/storage.js",
+        "src/utils/readability-lite.js",
+        "src/content-scripts/floating-toolbar.js"
+      ],
+      "css": ["src/content-scripts/floating-toolbar.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "觅露 (Truffle) — 标记全部内容",
+    "default_icon": {
+      "16": "src/assets/icon16.png",
+      "32": "src/assets/icon32.png",
+      "48": "src/assets/icon48.png",
+      "128": "src/assets/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "src/assets/icon16.png",
+    "32": "src/assets/icon32.png",
+    "48": "src/assets/icon48.png",
+    "128": "src/assets/icon128.png"
+  },
+  "options_page": "src/options/options.html",
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Alt+Shift+C"
+      },
+      "description": "唤起觅露 — 标记当前页面"
+    },
+    "show-full-page-editor": {
+      "suggested_key": {
+        "default": "Alt+Shift+X"
+      },
+      "description": "唤起觅露全页标记编辑器"
+    }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["src/assets/*"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "kimi_coding_ua",
+        "enabled": true,
+        "path": "src/utils/rules.json"
+      }
+    ]
+  }
+}

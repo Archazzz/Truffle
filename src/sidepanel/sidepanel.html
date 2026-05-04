@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>觅露 (Truffle) — 标记</title>
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+  <div class="truffle-panel">
+    <!-- 头部 -->
+    <header class="truffle-header">
+      <div class="truffle-logo">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="M21 21l-4.35-4.35"/>
+        </svg>
+        <span>觅露</span>
+      </div>
+      <div class="truffle-mode-badge" id="mode-badge">猎人模式</div>
+    </header>
+
+    <!-- 主表单区 -->
+    <main class="truffle-main">
+      <!-- 来源信息 -->
+      <div class="truffle-source-bar">
+        <span id="source-url" class="truncate"></span>
+        <span id="source-date"></span>
+      </div>
+
+      <!-- 标题 -->
+      <div class="truffle-field truffle-field-required">
+        <label for="title-input">文档标题 <span class="required">*</span></label>
+        <div class="truffle-input-wrap">
+          <input type="text" id="title-input" placeholder="输入这段摘录的标题（必填）">
+          <button class="truffle-ai-btn" id="ai-title-btn" title="AI生成标题">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Tags -->
+      <div class="truffle-field">
+        <label for="tags-input">标签</label>
+        <div class="truffle-input-wrap">
+          <input type="text" id="tags-input" placeholder="用逗号分隔，如：AI, 产品, 思考">
+          <button class="truffle-ai-btn" id="ai-tags-btn" title="AI生成标签">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Category -->
+      <div class="truffle-field">
+        <label for="category-select">分类</label>
+        <select id="category-select">
+          <option value="">选择分类...</option>
+          <option value="科技">科技</option>
+          <option value="商业">商业</option>
+          <option value="设计">设计</option>
+          <option value="人文">人文</option>
+          <option value="学术">学术</option>
+          <option value="生活">生活</option>
+          <option value="其他">其他</option>
+        </select>
+        <div class="truffle-category-custom-row" style="display:flex;gap:6px;margin-top:10px;">
+          <input type="text" id="custom-category-input" placeholder="自定义分类..." style="flex:1;padding:5px 8px;font-size:12px;">
+          <button id="add-category-btn" style="padding:5px 10px;border:1px solid #6366F1;border-radius:6px;background:#6366F1;color:white;cursor:pointer;font-size:12px;flex-shrink:0;">添加</button>
+        </div>
+      </div>
+
+      <!-- 摘录内容预览 -->
+      <div class="truffle-field">
+        <label>摘录内容</label>
+        <div class="truffle-excerpt-box" id="excerpt-preview"></div>
+      </div>
+
+      <!-- 个人思考 -->
+      <div class="truffle-field">
+        <label for="thoughts-input">
+          个人思考
+          <span class="hint">记录你的想法、感受、借鉴点（强制填写）</span>
+        </label>
+        <textarea id="thoughts-input" rows="4" placeholder="这段内容让你想到了什么？有什么质疑或共鸣？"></textarea>
+      </div>
+
+      <!-- AI功能区 -->
+      <div class="truffle-ai-section">
+        <div class="truffle-ai-header">
+          <span>AI 辅助</span>
+          <label class="truffle-toggle">
+            <input type="checkbox" id="ai-enabled" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="truffle-ai-buttons" id="ai-buttons">
+          <button class="truffle-ai-action" data-action="summary">总结</button>
+          <button class="truffle-ai-action" data-action="expansion">扩展阅读</button>
+          <button class="truffle-ai-action truffle-ai-danger" data-action="critique">批判性思考</button>
+          <button class="truffle-ai-action" data-action="metadata">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            一键生成元数据
+          </button>
+        </div>
+        <!-- AI输出区 -->
+        <div class="truffle-ai-output" id="ai-output" style="display:none;">
+          <div class="ai-output-header">
+            <span id="ai-output-label">AI 输出</span>
+            <button class="ai-close-btn" id="ai-close-btn">&times;</button>
+          </div>
+          <div class="ai-output-content" id="ai-output-content"></div>
+          <div class="ai-loading" id="ai-loading" style="display:none;">
+            <span class="spinner"></span>
+            <span>正在思考...</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Markdown预览 -->
+      <div class="truffle-preview-section">
+        <div class="truffle-preview-header">
+          <span>预览</span>
+          <button class="truffle-preview-toggle" id="preview-toggle">展开</button>
+        </div>
+        <pre class="truffle-preview-content" id="markdown-preview" style="display:none;"></pre>
+      </div>
+    </main>
+
+    <!-- 底部操作栏 -->
+    <footer class="truffle-footer">
+      <div class="truffle-save-path">
+        <span id="save-path-display">保存路径未设置</span>
+        <button class="truffle-text-btn" id="change-path-btn">更改</button>
+      </div>
+      <div class="truffle-actions">
+        <button class="truffle-btn-secondary" id="cancel-btn">取消</button>
+        <button class="truffle-btn-primary" id="save-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          保存到本地
+        </button>
+      </div>
+    </footer>
+  </div>
+
+  <script src="../utils/constants.js"></script>
+  <script src="../utils/storage.js"></script>
+  <script src="../utils/markdown-engine.js"></script>
+  <script src="../utils/ai-client.js"></script>
+  <script src="sidepanel.js"></script>
+</body>
+</html>
