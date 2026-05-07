@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>觅露 Truffle — 夺回你的信息判断力</title>
+  <link rel="icon" type="image/png" href="./truffle-icon.png">
+  <style>
+    :root {
+      --p-deep: #5431CE;
+      --p-light: #7B5AE0;
+      --p-glow: rgba(84,49,206,0.12);
+      --p-glow-strong: rgba(84,49,206,0.20);
+      --cream: #FAF9F7;
+      --cream-warm: #F5F3EF;
+      --surface: #FFFFFF;
+      --text: #111827;
+      --text-2: #374151;
+      --text-3: #6B7280;
+      --border: rgba(0,0,0,0.06);
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.06);
+      --shadow-lg: 0 12px 40px rgba(0,0,0,0.08);
+      --radius: 16px;
+      --radius-sm: 10px;
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+      --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --cream: #0B0A0F;
+        --cream-warm: #121018;
+        --surface: #18151F;
+        --text: #F3F4F6;
+        --text-2: #D1D5DB;
+        --text-3: #9CA3AF;
+        --border: rgba(255,255,255,0.06);
+        --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
+        --shadow-md: 0 4px 16px rgba(0,0,0,0.3);
+        --shadow-lg: 0 12px 40px rgba(0,0,0,0.4);
+        --p-glow: rgba(123,90,224,0.15);
+        --p-glow-strong: rgba(123,90,224,0.25);
+      }
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Noto Sans SC", sans-serif;
+      background: var(--cream);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    ::selection { background: rgba(84,49,206,0.15); }
+
+    a { text-decoration: none; color: inherit; }
+    button { font-family: inherit; border: none; cursor: pointer; background: none; }
+    ul { list-style: none; }
+
+    .container { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+
+    /* ===== Background Orbs ===== */
+    .orb {
+      position: fixed; border-radius: 50%; pointer-events: none; z-index: 0;
+      filter: blur(120px); opacity: 0.4;
+    }
+    .orb-1 { width: 600px; height: 600px; top: -200px; right: -150px; background: var(--p-glow-strong); animation: float1 14s ease-in-out infinite alternate; }
+    .orb-2 { width: 500px; height: 500px; top: 35%; left: -200px; background: var(--p-glow); animation: float2 18s ease-in-out infinite alternate; }
+    .orb-3 { width: 400px; height: 400px; bottom: 5%; right: -100px; background: var(--p-glow); animation: float3 12s ease-in-out infinite alternate-reverse; }
+
+    @keyframes float1 { from { transform: translate(0,0) scale(1); } to { transform: translate(40px,-30px) scale(1.1); } }
+    @keyframes float2 { from { transform: translate(0,0) scale(1); } to { transform: translate(-30px,40px) scale(1.15); } }
+    @keyframes float3 { from { transform: translate(0,0) scale(1); } to { transform: translate(25px,-20px) scale(1.2); } }
+
+    @media (prefers-reduced-motion: reduce) { .orb { animation: none; } }
+
+    /* ===== Buttons ===== */
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 24px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600;
+      transition: all 0.35s var(--ease); position: relative; overflow: hidden;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--p-deep), var(--p-light));
+      color: #fff; box-shadow: 0 4px 20px rgba(84,49,206,0.3);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(84,49,206,0.45); }
+    .btn-secondary {
+      background: var(--surface); color: var(--text-2); border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+    }
+    .btn-secondary:hover { border-color: var(--p-light); color: var(--p-deep); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+
+    /* ===== Nav ===== */
+    .nav {
+      position: fixed; inset: 0 0 auto 0; z-index: 100; padding: 14px 0;
+      transition: background 0.4s, box-shadow 0.4s, backdrop-filter 0.4s;
+    }
+    .nav.scrolled {
+      background: rgba(250,249,247,0.8); backdrop-filter: blur(20px) saturate(1.2);
+      box-shadow: 0 1px 0 var(--border);
+    }
+    @media (prefers-color-scheme: dark) { .nav.scrolled { background: rgba(11,10,15,0.8); } }
+
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; }
+    .nav-brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 17px; }
+    .nav-brand img { width: 30px; height: 30px; border-radius: 8px; }
+    .nav-brand span:last-child { font-size: 11px; font-weight: 500; color: var(--p-light); background: var(--p-glow); padding: 2px 8px; border-radius: 100px; }
+    .nav-links { display: flex; align-items: center; gap: 6px; }
+    .nav-link { padding: 8px 14px; border-radius: 8px; font-size: 14px; font-weight: 500; color: var(--text-2); transition: all 0.25s; }
+    .nav-link:hover { color: var(--p-deep); background: var(--p-glow); }
+    .nav-cta { padding: 8px 18px; font-size: 13px; }
+    .nav-toggle { display: none; flex-direction: column; gap: 5px; padding: 4px; }
+    .nav-toggle span { display: block; width: 22px; height: 2px; background: var(--text); border-radius: 2px; transition: all 0.3s; }
+    .nav-toggle.active span:nth-child(1) { transform: rotate(45deg) translate(5px,5px); }
+    .nav-toggle.active span:nth-child(2) { opacity: 0; }
+    .nav-toggle.active span:nth-child(3) { transform: rotate(-45deg) translate(5px,-5px); }
+
+    @media (max-width: 768px) {
+      .nav-links { position: absolute; top: 100%; left: 0; right: 0; flex-direction: column; gap: 4px;
+        padding: 12px 24px 20px; background: rgba(250,249,247,0.95); backdrop-filter: blur(20px);
+        border-bottom: 1px solid var(--border); transform: translateY(-100%); opacity: 0;
+        pointer-events: none; transition: all 0.35s var(--ease);
+      }
+      .nav-links.open { transform: translateY(0); opacity: 1; pointer-events: auto; }
+      .nav-link { width: 100%; padding: 10px 16px; font-size: 15px; }
+      .nav-toggle { display: flex; }
+      .nav-cta { display: none; }
+      @media (prefers-color-scheme: dark) { .nav-links { background: rgba(11,10,15,0.95); } }
+    }
+
+    /* ===== Hero ===== */
+    .hero { position: relative; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      padding: 140px 0 100px; text-align: center; overflow: hidden; }
+    .hero-inner { position: relative; z-index: 2; }
+
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 16px; border-radius: 100px; font-size: 12px; font-weight: 600;
+      background: var(--p-glow); color: var(--p-deep); margin-bottom: 32px;
+      border: 1px solid rgba(84,49,206,0.1);
+    }
+    .hero-badge svg { width: 14px; height: 14px; }
+
+    .hero-title { font-size: clamp(42px, 7vw, 76px); font-weight: 800; line-height: 1.08; letter-spacing: -0.03em; margin-bottom: 24px; }
+    .hero-title .grad {
+      background: linear-gradient(135deg, var(--p-deep), var(--p-light));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+
+    .hero-sub { font-size: clamp(16px, 2vw, 20px); color: var(--text-3); max-width: 520px; margin: 0 auto 40px; line-height: 1.7; }
+    .hero-actions { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 56px; flex-wrap: wrap; }
+
+    .hero-visual { position: relative; width: 100%; max-width: 720px; margin: 0 auto; }
+    .hero-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      box-shadow: var(--shadow-lg); padding: 24px 28px; text-align: left;
+      position: relative; overflow: hidden;
+    }
+    .hero-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--p-deep), var(--p-light));
+    }
+    .hero-card-bar { display: flex; align-items: center; gap: 6px; margin-bottom: 16px; }
+    .hero-card-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .hero-card-dot.r { background: #FF5F57; } .hero-card-dot.y { background: #FFBD2E; } .hero-card-dot.g { background: #28CA41; }
+    .hero-card-text { font-size: 13px; line-height: 1.7; color: var(--text-2); margin-bottom: 10px; }
+    .hero-card-text.hl {
+      background: linear-gradient(90deg, rgba(84,49,206,0.08), rgba(123,90,224,0.08));
+      padding: 6px 12px; border-radius: 6px; margin: 0 -12px 10px;
+      position: relative; overflow: hidden; color: var(--text);
+    }
+    .hero-card-text.hl::after {
+      content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(84,49,206,0.15), transparent);
+      animation: shimmer 2.5s ease-in-out infinite;
+    }
+    @keyframes shimmer { 0% { left: -100%; } 50% { left: 100%; } 100% { left: 100%; } }
+
+    .hero-floating {
+      position: absolute; top: 72px; right: 32px;
+      display: flex; align-items: center; gap: 6px;
+      padding: 7px 12px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--p-deep), var(--p-light));
+      box-shadow: 0 8px 24px rgba(84,49,206,0.35);
+      animation: floatUp 0.7s var(--ease-bounce) 0.6s both;
+      cursor: default;
+    }
+    .hero-floating span { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.95); }
+    .hero-floating .f-btn { padding: 3px 10px; border-radius: 5px; font-size: 11px; font-weight: 600;
+      background: rgba(255,255,255,0.15); color: #fff; }
+    @keyframes floatUp { from { opacity: 0; transform: scale(0.7) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+    .hero-meta { display: flex; align-items: center; justify-content: center; gap: 32px; flex-wrap: wrap; }
+    .hero-meta-item { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 500; color: var(--text-3); }
+    .hero-meta-item svg { color: var(--p-light); flex-shrink: 0; }
+
+    @media (max-width: 640px) {
+      .hero { padding: 120px 0 60px; min-height: auto; }
+      .hero-actions { flex-direction: column; width: 100%; }
+      .hero-actions .btn { width: 100%; justify-content: center; }
+      .hero-floating { display: none; }
+      .hero-meta { gap: 16px 24px; }
+    }
+
+    /* ===== Section Common ===== */
+    .section { padding: 100px 0; position: relative; z-index: 2; }
+    .section-head { text-align: center; margin-bottom: 64px; }
+    .section-label {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 14px; border-radius: 100px; font-size: 12px; font-weight: 600;
+      background: var(--p-glow); color: var(--p-deep); margin-bottom: 20px;
+      border: 1px solid rgba(84,49,206,0.08);
+    }
+    .section-title { font-size: clamp(28px, 4vw, 40px); font-weight: 700; line-height: 1.2; margin-bottom: 14px; letter-spacing: -0.02em; }
+    .section-sub { font-size: 17px; color: var(--text-3); max-width: 480px; margin: 0 auto; line-height: 1.7; }
+
+    /* ===== Philosophy Cards ===== */
+    .phil-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .phil-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 36px 28px; position: relative; overflow: hidden;
+      transition: all 0.5s var(--ease);
+    }
+    .phil-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); border-color: rgba(84,49,206,0.1); }
+    .phil-card:hover .phil-accent { opacity: 1; }
+    .phil-card:hover .phil-ico { background: linear-gradient(135deg, var(--p-deep), var(--p-light)); color: #fff;
+      transform: scale(1.08) rotate(-4deg); box-shadow: 0 8px 24px rgba(84,49,206,0.25); }
+
+    .phil-ico {
+      width: 44px; height: 44px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--p-glow); color: var(--p-deep); margin-bottom: 20px;
+      transition: all 0.4s var(--ease);
+    }
+    .phil-num { font-family: ui-monospace, monospace; font-size: 12px; font-weight: 600; color: var(--p-light); margin-bottom: 12px; }
+    .phil-title { font-size: 19px; font-weight: 700; margin-bottom: 10px; }
+    .phil-desc { font-size: 14px; color: var(--text-3); line-height: 1.7; }
+    .phil-accent {
+      position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--p-deep), var(--p-light));
+      opacity: 0; transition: opacity 0.4s;
+    }
+
+    @media (max-width: 900px) {
+      .phil-grid { grid-template-columns: 1fr; }
+      .phil-card { padding: 28px 22px; }
+    }
+
+    /* ===== Features (Cards) ===== */
+    .feat-cards { display: flex; flex-direction: column; gap: 48px; margin-top: 64px; }
+    .feat-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      box-shadow: var(--shadow-md); overflow: hidden; transition: box-shadow 0.4s var(--ease);
+    }
+    .feat-card:hover { box-shadow: var(--shadow-lg); }
+    .feat-card { border-top: 3px solid transparent; position: relative; }
+    .feat-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--p-deep), var(--p-light));
+    }
+
+    .feat-card-h {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 28px; background: var(--cream-warm); border-bottom: 1px solid var(--border);
+    }
+    .feat-card-h .badge-mode {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 12px; border-radius: 100px; font-size: 12px; font-weight: 600;
+    }
+    .feat-card-h .badge-mode.h { color: var(--p-deep); background: var(--p-glow); }
+    .feat-card-h .badge-mode.a { color: var(--text-2); background: var(--border); }
+    .feat-card-h .shortcut { margin-left: auto; font-size: 12px; font-family: ui-monospace, monospace; color: var(--text-3); }
+
+    .feat-card-body { display: grid; grid-template-columns: 1fr 1.1fr; gap: 48px; align-items: center; padding: 40px 36px; }
+    .feat-content { max-width: 100%; }
+    .feat-title { font-size: 26px; font-weight: 700; line-height: 1.25; margin-bottom: 12px; }
+    .feat-desc { font-size: 15px; color: var(--text-3); line-height: 1.7; margin-bottom: 22px; }
+    .feat-list { display: flex; flex-direction: column; gap: 10px; }
+    .feat-list li { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: var(--text-2); }
+    .feat-list li svg { flex-shrink: 0; margin-top: 2px; color: var(--p-deep); }
+
+    kbd { display: inline-block; padding: 2px 7px; border-radius: 5px; font-family: ui-monospace, monospace;
+      font-size: 0.82em; font-weight: 600; color: var(--text-2); background: var(--p-glow); border: 1px solid var(--border); }
+
+    .feat-viz { position: relative; }
+
+    /* Hunter Demo */
+    .viz-hunter { position: relative; }
+    .viz-page { background: var(--cream); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 22px 18px; }
+    .viz-page p { font-size: 12px; line-height: 1.7; color: var(--text-2); margin-bottom: 8px; }
+    .viz-page p.hl {
+      background: linear-gradient(90deg, rgba(84,49,206,0.08), rgba(123,90,224,0.08));
+      padding: 4px 10px; border-radius: 5px; margin: 0 -10px 8px; color: var(--text);
+      position: relative; overflow: hidden;
+    }
+    .viz-page p.hl::after {
+      content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(84,49,206,0.15), transparent);
+      animation: shimmer 2.5s ease-in-out infinite;
+    }
+    .viz-toolbar {
+      position: absolute; top: 14px; right: 14px;
+      display: flex; align-items: center; gap: 6px; padding: 6px 10px;
+      background: linear-gradient(135deg, var(--p-deep), var(--p-light));
+      border-radius: 8px; box-shadow: 0 6px 20px rgba(84,49,206,0.3);
+      animation: popIn 0.5s var(--ease-bounce) 0.4s both;
+      transition: transform 0.3s; cursor: pointer;
+    }
+    .viz-toolbar:hover { transform: scale(1.05); }
+    .viz-toolbar span { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.95); }
+    .viz-toolbar .t-btn { padding: 2px 8px; border-radius: 4px; background: rgba(255,255,255,0.15); color: #fff; font-size: 10px; font-weight: 600; }
+    .viz-toolbar .t-sep { width: 1px; height: 12px; background: rgba(255,255,255,0.25); }
+    @keyframes popIn { from { opacity: 0; transform: scale(0.7) translateY(6px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+    .viz-editor {
+      position: absolute; bottom: -12px; left: -8px; right: -8px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-lg); overflow: hidden;
+      animation: slideUp 0.6s var(--ease) 0.8s both;
+    }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    .viz-eh { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 600; color: var(--text-3); }
+    .viz-eh .ed { width: 8px; height: 8px; border-radius: 50%; background: var(--p-light); }
+    .viz-eb { display: flex; padding: 12px; gap: 12px; }
+    .viz-eb-l { flex: 1; }
+    .viz-eb-r { width: 110px; flex-shrink: 0; }
+    .viz-lbl { font-size: 10px; font-weight: 600; color: var(--text-3); margin-bottom: 3px; }
+    .viz-inp { height: 18px; background: var(--cream-warm); border-radius: 4px; margin-bottom: 6px; }
+    .viz-inp.l { height: 36px; } .viz-inp.xl { height: 64px; }
+    .viz-chips { display: flex; gap: 4px; margin-bottom: 6px; }
+    .viz-chip { padding: 2px 7px; border-radius: 100px; font-size: 9px; font-weight: 600; background: var(--border); color: var(--text-3); }
+    .viz-chip.on { background: linear-gradient(135deg, var(--p-deep), var(--p-light)); color: #fff; }
+
+    /* Arch Demo */
+    .viz-arch { position: relative; display: flex; gap: 14px; align-items: flex-start; }
+    .viz-browser { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; box-shadow: var(--shadow-sm); }
+    .viz-browser-bar { display: flex; align-items: center; gap: 6px; padding: 9px 12px; border-bottom: 1px solid var(--border); background: var(--cream-warm); }
+    .viz-browser-body { padding: 16px; }
+    .viz-aed { width: 190px; flex-shrink: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-lg); overflow: hidden; animation: slideUp 0.6s var(--ease) 0.3s both; }
+    .viz-aed-h { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 12px; }
+    .viz-aed-b { padding: 10px; }
+
+    .vline { height: 7px; border-radius: 3px; background: var(--border); margin-bottom: 7px; }
+    .vline.w-70 { width: 70%; } .vline.w-full { width: 100%; } .vline.w-85 { width: 85%; }
+    .vline.w-60 { width: 60%; } .vline.w-90 { width: 90%; } .vline.w-40 { width: 40%; }
+    .vline.w-50 { width: 50%; } .vline.w-80 { width: 80%; } .vline.w-55 { width: 55%; }
+    .vline.w-30 { width: 30%; } .vline.w-20 { width: 20%; }
+    .vline.lb { background: var(--cream-warm); }
+    .vline.tx { height: 14px; background: var(--cream-warm); }
+    .vline.gap { height: 6px; background: transparent; }
+    .vline.save { height: 20px; border-radius: 4px; background: linear-gradient(135deg, var(--p-deep), var(--p-light)); margin-top: 2px; }
+
+    .arch-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .arch-dot.r { background: #FF5F57; } .arch-dot.y { background: #FFBD2E; } .arch-dot.g { background: #28CA41; }
+    .arch-url { margin-left: 6px; font-size: 10px; font-family: ui-monospace, monospace; color: var(--text-3);
+      background: var(--surface); padding: 2px 8px; border-radius: 4px; flex: 1; }
+
+    @media (max-width: 900px) {
+      .feat-card-body { grid-template-columns: 1fr; gap: 32px; padding: 28px 22px; }
+      .feat-card-h { padding: 12px 22px; }
+    }
+
+    /* ===== Compare ===== */
+    .compare-wrap { overflow-x: auto; margin-top: 48px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); }
+    .compare-table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 600px; }
+    .compare-table thead th { padding: 16px 18px; text-align: center; font-weight: 600; color: var(--text-2);
+      border-bottom: 1px solid var(--border); background: var(--cream-warm); white-space: nowrap; }
+    .compare-table thead th:first-child { text-align: left; }
+    .compare-table tbody td { padding: 13px 18px; text-align: center; border-bottom: 1px solid var(--border); color: var(--text-2); }
+    .compare-table tbody td:first-child { text-align: left; font-weight: 500; }
+    .compare-table tbody tr:last-child td { border-bottom: none; }
+    .compare-table tbody tr:hover { background: rgba(84,49,206,0.02); }
+    .col-tf { background: rgba(84,49,206,0.04); font-weight: 600; }
+    .hl-row .col-tf { background: rgba(84,49,206,0.07); }
+    .c-y { display: inline-block; width: 20px; height: 20px; border-radius: 50%; background: rgba(16,185,129,0.12); position: relative; }
+    .c-y::after { content: ''; position: absolute; top: 5px; left: 7px; width: 5px; height: 9px; border: solid #10B981; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+    .c-y.s::after { border-color: var(--p-deep); } .c-y.s { background: rgba(84,49,206,0.12); }
+    .c-n { display: inline-block; width: 20px; height: 20px; border-radius: 50%; background: rgba(239,68,68,0.08); position: relative; }
+    .c-n::before, .c-n::after { content: ''; position: absolute; top: 50%; left: 50%; width: 10px; height: 2px; background: #EF4444; }
+    .c-n::before { transform: translate(-50%,-50%) rotate(45deg); }
+    .c-n::after { transform: translate(-50%,-50%) rotate(-45deg); }
+    .dim-hl { color: var(--p-deep); font-weight: 600; }
+
+    @media (max-width: 768px) {
+      .compare-wrap { margin: 32px -24px 0; border-radius: 0; border-left: none; border-right: none; }
+    }
+
+    /* ===== CTA ===== */
+    .cta-card {
+      text-align: center; padding: 64px 40px; border-radius: var(--radius);
+      background: linear-gradient(135deg, rgba(84,49,206,0.06), rgba(123,90,224,0.06));
+      border: 1px solid rgba(84,49,206,0.1); position: relative; overflow: hidden;
+    }
+    .cta-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--p-deep), var(--p-light)); }
+    .cta-title { font-size: clamp(26px, 4vw, 38px); font-weight: 700; line-height: 1.2; margin-bottom: 14px; }
+    .cta-desc { font-size: 16px; color: var(--text-3); max-width: 440px; margin: 0 auto 32px; }
+    .cta-actions { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 32px; flex-wrap: wrap; }
+    .cta-meta { display: flex; align-items: center; justify-content: center; gap: 28px; flex-wrap: wrap; }
+    .cta-meta-item { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: var(--text-3); }
+    .cta-meta-item svg { color: var(--p-light); flex-shrink: 0; }
+
+    @media (max-width: 640px) {
+      .cta-card { padding: 44px 24px; }
+      .cta-actions { flex-direction: column; width: 100%; }
+      .cta-actions .btn { width: 100%; justify-content: center; }
+    }
+
+    /* ===== Footer ===== */
+    .footer { border-top: 1px solid var(--border); padding: 36px 0; position: relative; z-index: 2; }
+    .footer-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+    .footer-brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; color: var(--text-2); }
+    .footer-brand img { width: 26px; height: 26px; border-radius: 6px; }
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a { font-size: 14px; font-weight: 500; color: var(--text-3); transition: color 0.25s; }
+    .footer-links a:hover { color: var(--p-deep); }
+    .footer-copy { font-size: 12px; color: var(--text-3); }
+
+    @media (max-width: 640px) {
+      .footer-inner { flex-direction: column; text-align: center; gap: 18px; }
+    }
+
+    /* ===== Scroll Reveal ===== */
+    .sr { opacity: 0; transform: translateY(30px); transition: opacity 0.8s var(--ease), transform 0.8s var(--ease); }
+    .sr.vis { opacity: 1; transform: translateY(0); }
+    .sr-d1 { transition-delay: 0.1s; } .sr-d2 { transition-delay: 0.2s; } .sr-d3 { transition-delay: 0.3s; }
+  </style>
+</head>
+<body>
+
+  <!-- Background Orbs -->
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <!-- Nav -->
+  <nav class="nav" id="nav">
+    <div class="container nav-inner">
+      <a href="#" class="nav-brand">
+        <img src="./truffle-icon.png" alt="Truffle">
+        <span>觅露</span>
+        <span>v1.4.1</span>
+      </a>
+      <div class="nav-links" id="navLinks">
+        <a href="#philosophy" class="nav-link">理念</a>
+        <a href="#features" class="nav-link">功能</a>
+        <a href="#compare" class="nav-link">对比</a>
+        <a href="https://github.com/Archazzz/Truffle" target="_blank" rel="noopener" class="nav-link">GitHub</a>
+      </div>
+      <a href="https://github.com/Archazzz/Truffle/releases" target="_blank" rel="noopener" class="btn btn-primary nav-cta">下载</a>
+      <button class="nav-toggle" id="navToggle" aria-label="menu"><span></span><span></span><span></span></button>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero" id="hero">
+    <div class="container hero-inner">
+      <div class="hero-badge sr">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        AGPL v3 开源
+      </div>
+      <h1 class="hero-title sr sr-d1">
+        夺回你的<br><span class="grad">信息判断力</span>
+      </h1>
+      <p class="hero-sub sr sr-d2">
+        从网页提取精华，以 Markdown 保存在本地。<br class="hide-sm">不依赖任何平台，你的知识只属于你。
+      </p>
+      <div class="hero-actions sr sr-d2">
+        <a href="https://github.com/Archazzz/Truffle/releases" target="_blank" rel="noopener" class="btn btn-primary">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          下载插件
+        </a>
+        <a href="https://github.com/Archazzz/Truffle" target="_blank" rel="noopener" class="btn btn-secondary">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+          GitHub
+        </a>
+      </div>
+
+      <!-- Hero Visual -->
+      <div class="hero-visual sr sr-d3">
+        <div class="hero-card">
+          <div class="hero-card-bar">
+            <span class="hero-card-dot r"></span><span class="hero-card-dot y"></span><span class="hero-card-dot g"></span>
+          </div>
+          <p class="hero-card-text" style="font-size:11px;color:var(--text-3);margin-bottom:16px;">阿茶的网络日志</p>
+          <p class="hero-card-text">2026 年的前端开发已经进入了新的阶段。随着 AI 辅助编程的普及，开发者的工作方式正在发生根本性变化。</p>
+          <p class="hero-card-text hl">AI 不是来替代程序员的，而是来增强程序员的判断力。关键在于如何将 AI 的输出与自己的思考结合起来。</p>
+          <p class="hero-card-text hl">真正有价值的不是 AI 生成的代码，而是你在阅读、理解和修改这些代码过程中形成的认知。</p>
+          <p class="hero-card-text">这意味着我们需要一种新的工作流：让 AI 处理重复性任务，同时保留人类在架构设计和质量把控上的主导地位。</p>
+        </div>
+        <div class="hero-floating">
+          <span>复制</span>
+          <span class="t-sep" style="width:1px;height:14px;background:rgba(255,255,255,0.25);"></span>
+          <span class="f-btn">标记</span>
+        </div>
+      </div>
+
+      <div class="hero-meta sr sr-d3" style="margin-top:48px;">
+        <span class="hero-meta-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          全页摘录
+        </span>
+        <span class="hero-meta-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          划词摘录
+        </span>
+        <span class="hero-meta-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+          AI 辅助
+        </span>
+        <span class="hero-meta-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          本地 Markdown
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Philosophy -->
+  <section class="section" id="philosophy">
+    <div class="container">
+      <div class="section-head sr">
+        <span class="section-label">核心理念</span>
+        <h2 class="section-title">一款理念截然不同的剪藏工具</h2>
+      </div>
+      <div class="phil-grid">
+        <div class="phil-card sr sr-d1">
+          <div class="phil-ico">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <div class="phil-num">01</div>
+          <h3 class="phil-title">标记时写下思考</h3>
+          <p class="phil-desc">至少 3 个字符，让「收藏」变成「内化」。</p>
+          <div class="phil-accent"></div>
+        </div>
+        <div class="phil-card sr sr-d2">
+          <div class="phil-ico">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <div class="phil-num">02</div>
+          <h3 class="phil-title">数据存在本地</h3>
+          <p class="phil-desc">标准 Markdown + YAML，直接写入本地文件夹。</p>
+          <div class="phil-accent"></div>
+        </div>
+        <div class="phil-card sr sr-d3">
+          <div class="phil-ico">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </div>
+          <div class="phil-num">03</div>
+          <h3 class="phil-title">AI 是增强层</h3>
+          <p class="phil-desc">自备 API Key，总结、批判、翻译——AI 是助手。</p>
+          <div class="phil-accent"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="section" id="features">
+    <div class="container">
+      <div class="section-head sr">
+        <span class="section-label">功能</span>
+        <h2 class="section-title">两种模式，一种态度</h2>
+        <p class="section-sub">猎人模式划词摘录，考古模式全页归档</p>
+      </div>
+
+      <div class="feat-cards">
+
+      <!-- Hunter Mode Card -->
+      <div class="feat-card hunter sr">
+        <div class="feat-card-h">
+          <span class="badge-mode h">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            猎人模式
+          </span>
+          <span class="shortcut">鼠标选中文字</span>
+        </div>
+        <div class="feat-card-body">
+          <div class="feat-content">
+            <h3 class="feat-title">选中即摘录</h3>
+            <p class="feat-desc">划词后紫色悬浮窗自动弹出，一键进入标记流程。</p>
+            <ul class="feat-list">
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>悬浮窗 &le;200ms 响应</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>左右分栏编辑器</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>AI 预填元数据</li>
+            </ul>
+          </div>
+          <div class="feat-viz">
+            <div class="viz-hunter">
+              <div class="viz-page">
+                <p style="font-size:10px;color:var(--text-3);margin-bottom:10px;">阿茶的网络日志</p>
+                <p>2026 年的前端开发已经进入了新的阶段。AI 辅助编程正在改变开发者的工作方式。</p>
+                <p class="hl">真正有价值的不是 AI 生成的代码，而是你在理解和修改过程中形成的认知。</p>
+                <p>这意味着我们需要一种新的工作流，让 AI 处理重复性任务，保留人类在质量把控上的主导地位。</p>
+              </div>
+              <div class="viz-toolbar">
+                <span>复制</span>
+                <span class="t-sep"></span>
+                <span class="t-btn">标记</span>
+              </div>
+              <div class="viz-editor">
+                <div class="viz-eh"><span class="ed"></span><span>标记 · archazzz.com</span></div>
+                <div class="viz-eb">
+                  <div class="viz-eb-l">
+                    <div class="viz-lbl">标题</div>
+                    <div class="viz-inp"></div>
+                    <div class="viz-lbl">分类</div>
+                    <div class="viz-chips"><span class="viz-chip on">科技</span><span class="viz-chip">商业</span><span class="viz-chip">设计</span></div>
+                    <div class="viz-lbl">摘录</div>
+                    <div class="viz-inp l"></div>
+                  </div>
+                  <div class="viz-eb-r">
+                    <div class="viz-lbl">个人思考 *</div>
+                    <div class="viz-inp xl"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Archaeology Mode Card -->
+      <div class="feat-card arch sr">
+        <div class="feat-card-h">
+          <span class="badge-mode a">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            考古模式
+          </span>
+          <span class="shortcut"><kbd>Alt+Shift+X</kbd></span>
+        </div>
+        <div class="feat-card-body">
+          <div class="feat-content">
+            <h3 class="feat-title">全页一键归档</h3>
+            <p class="feat-desc">快捷键或点击图标，自动提取正文。支持 7 个 AI 平台定向提取。</p>
+            <ul class="feat-list">
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>7 个 AI 平台定向提取</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Readability-lite 正文提取</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>同一 URL 增量追加</li>
+            </ul>
+          </div>
+          <div class="feat-viz">
+            <div class="viz-arch">
+              <div class="viz-browser">
+                <div class="viz-browser-bar">
+                  <span class="arch-dot r"></span><span class="arch-dot y"></span><span class="arch-dot g"></span>
+                  <span class="arch-url">archazzz.com/blog/...</span>
+                </div>
+                <div class="viz-browser-body">
+                  <div class="vline w-50"></div><div class="vline w-full"></div><div class="vline w-80"></div>
+                  <div class="vline w-60"></div><div class="vline w-90"></div><div class="vline w-40"></div>
+                  <div class="vline w-70"></div><div class="vline w-55"></div>
+                </div>
+              </div>
+              <div class="viz-aed">
+                <div class="viz-aed-h"><span class="grad" style="font-weight:700;">觅露</span></div>
+                <div class="viz-aed-b">
+                  <div class="vline w-30 lb"></div><div class="vline w-full lb"></div><div class="vline w-40 lb"></div>
+                  <div class="vline gap"></div>
+                  <div class="vline w-20 lb"></div><div class="vline w-full lb"></div><div class="vline w-60 lb"></div>
+                  <div class="vline gap"></div>
+                  <div class="vline w-20 lb"></div><div class="vline w-full tx"></div><div class="vline w-full tx"></div>
+                  <div class="vline gap"></div>
+                  <div class="vline save"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Compare -->
+  <section class="section" id="compare">
+    <div class="container">
+      <div class="section-head sr">
+        <span class="section-label">对比</span>
+        <h2 class="section-title">不只是剪藏</h2>
+        <p class="section-sub">觅露在关键维度上做了不一样的选择</p>
+      </div>
+      <div class="compare-wrap sr">
+        <table class="compare-table">
+          <thead>
+            <tr><th>功能维度</th><th class="col-tf">觅露</th><th>豆包</th><th>Kimi</th><th>Readwise</th><th>Glasp</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="dim">划词摘录</td><td class="col-tf"><span class="c-y"></span></td><td><span class="c-y"></span></td><td><span class="c-y"></span></td><td><span class="c-n"></span></td><td><span class="c-y"></span></td></tr>
+            <tr><td class="dim">全页摘录</td><td class="col-tf"><span class="c-y"></span></td><td><span class="c-y"></span></td><td><span class="c-y"></span></td><td><span class="c-y"></span></td><td><span class="c-y"></span></td></tr>
+            <tr><td class="dim">AI 摘要</td><td class="col-tf"><span class="c-y"></span></td><td><span class="c-y"></span></td><td><span class="c-y"></span></td><td><span class="c-y"></span></td><td><span class="c-y"></span></td></tr>
+            <tr class="hl-row"><td class="dim"><span class="dim-hl">批判性分析</span></td><td class="col-tf"><span class="c-y s"></span></td><td><span class="c-n"></span></td><td><span class="c-n"></span></td><td><span class="c-n"></span></td><td><span class="c-n"></span></td></tr>
+            <tr class="hl-row"><td class="dim"><span class="dim-hl">本地 Markdown</span></td><td class="col-tf"><span class="c-y s"></span></td><td><span class="c-n"></span></td><td><span class="c-n"></span></td><td><span class="c-n"></span></td><td><span class="c-n"></span></td></tr>
+            <tr class="hl-row"><td class="dim"><span class="dim-hl">自备 API Key</span></td><td class="col-tf"><span class="c-y s"></span></td><td><span class="c-n"></span></td><td><span class="c-n"></span></td><td><span class="c-n"></span></td><td><span class="c-n"></span></td></tr>
+            <tr class="hl-row"><td class="dim"><span class="dim-hl">翻译</span></td><td class="col-tf"><span class="c-y s"></span></td><td><span class="c-n"></span></td><td><span class="c-n"></span></td><td><span class="c-n"></span></td><td><span class="c-n"></span></td></tr>
+            <tr class="hl-row"><td class="dim"><span class="dim-hl">后台 AI 队列</span></td><td class="col-tf"><span class="c-y s"></span></td><td><span class="c-n"></span></td><td><span class="c-n"></span></td><td><span class="c-n"></span></td><td><span class="c-n"></span></td></tr>
+            <tr class="hl-row"><td class="dim"><span class="dim-hl">Token 追踪</span></td><td class="col-tf"><span class="c-y s"></span></td><td><span class="c-n"></span></td><td><span class="c-n"></span></td><td><span class="c-n"></span></td><td><span class="c-n"></span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="section" id="cta">
+    <div class="container">
+      <div class="cta-card sr">
+        <h2 class="cta-title">夺回你的信息判断力</h2>
+        <p class="cta-desc">觅露 v1.4.1 现已开源。无需注册，一个激活码即可开始。</p>
+        <div class="cta-actions">
+          <a href="https://github.com/Archazzz/Truffle/releases" target="_blank" rel="noopener" class="btn btn-primary" style="padding:14px 32px;font-size:16px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            下载插件
+          </a>
+          <a href="https://github.com/Archazzz/Truffle" target="_blank" rel="noopener" class="btn btn-secondary" style="padding:14px 32px;font-size:16px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+            GitHub 仓库
+          </a>
+        </div>
+        <div class="cta-meta">
+          <span class="cta-meta-item">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            AGPL v3
+          </span>
+          <span class="cta-meta-item">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
+            Chrome / Edge 114+
+          </span>
+          <span class="cta-meta-item">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            纯原生，零依赖
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <img src="./truffle-icon.png" alt="Truffle">
+          <span>觅露 Truffle</span>
+        </div>
+        <div class="footer-links">
+          <a href="https://github.com/Archazzz/Truffle" target="_blank" rel="noopener">GitHub</a>
+          <a href="https://github.com/Archazzz/Truffle/releases" target="_blank" rel="noopener">Releases</a>
+          <a href="https://github.com/Archazzz/Truffle/blob/main/LICENSE" target="_blank" rel="noopener">License</a>
+        </div>
+        <div class="footer-copy">觅露 v1.4.1 &middot; AGPL v3 &middot; 2026</div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+  (function() {
+    'use strict';
+
+    // Nav scroll
+    const nav = document.getElementById('nav');
+    function updateNav() { nav.classList.toggle('scrolled', window.scrollY > 20); }
+    window.addEventListener('scroll', updateNav, { passive: true }); updateNav();
+
+    // Mobile menu
+    const toggle = document.getElementById('navToggle');
+    const links = document.getElementById('navLinks');
+    if (toggle && links) {
+      toggle.addEventListener('click', function() { toggle.classList.toggle('active'); links.classList.toggle('open'); });
+      links.querySelectorAll('a').forEach(function(a) { a.addEventListener('click', function() { toggle.classList.remove('active'); links.classList.remove('open'); }); });
+    }
+
+    // Scroll reveal
+    const obs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) { if (e.isIntersecting) { e.target.classList.add('vis'); obs.unobserve(e.target); } });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+    document.querySelectorAll('.sr').forEach(function(el) { obs.observe(el); });
+
+    // Smooth scroll
+    document.querySelectorAll('a[href^="#"]').forEach(function(a) {
+      a.addEventListener('click', function(e) {
+        const href = this.getAttribute('href');
+        if (href === '#') return;
+        const t = document.querySelector(href);
+        if (t) { e.preventDefault(); window.scrollTo({ top: t.getBoundingClientRect().top + window.pageYOffset - nav.offsetHeight - 20, behavior: 'smooth' }); }
+      });
+    });
+  })();
+  </script>
+
+</body>
+</html>
